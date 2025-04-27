@@ -12,34 +12,140 @@ namespace Diplom.Pages.Admin
     public partial class CreateTest : Page
     {
         private ObservableCollection<Question> questions;
+        private int? testId;
 
-        public CreateTest()
+        // Конструктор, принимающий ID теста для редактирования
+        public CreateTest(int? testId = null)
         {
             InitializeComponent();
             questions = new ObservableCollection<Question>();
+            this.testId = testId;
             QuestionsListView.ItemsSource = questions;
+
+            // Если передан ID теста, загружаем тест для редактирования
+            if (testId.HasValue)
+            {
+                LoadTestForEditing(testId.Value);
+            }
         }
 
+        private void LoadTestForEditing(int testId)
+        {
+            using (var context = new TeterinEntities()) // Замените на ваш контекст
+            {
+                // Находим тест по ID
+                var test = context.Test.Include("Question.Answer").FirstOrDefault(t => t.ID == testId);
+
+                if (test != null)
+                {
+                    // Устанавливаем DataContext для привязки
+                    this.DataContext = test;
+
+                    // Загружаем вопросы и ответы в коллекцию
+                    foreach (var question in test.Question)
+                    {
+                        questions.Add(new Question
+                        {
+                            Number = question.Number,
+                            Text = question.Text,
+                            Answer = new ObservableCollection<Answer>(question.Answer)
+                        });
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Тест не найден.");
+                }
+            }
+        }
+
+        // Проверка данных перед сохранением
+        private bool ValidateTestData()
+        {
+            if (string.IsNullOrWhiteSpace(TestNameTextBox.Text) || string.IsNullOrWhiteSpace(TestDescriptionTextBox.Text))
+            {
+                MessageBox.Show("Название и описание теста обязательны для заполнения.");
+                return false;
+            }
+
+            if (questions.Count == 0)
+            {
+                MessageBox.Show("Тест должен содержать хотя бы 1 вопрос.");
+                return false;
+            }
+
+            foreach (var question in questions)
+            {
+                if (question.Answer.Count < 2)
+                {
+                    MessageBox.Show($"Вопрос {question.Number} должен иметь хотя бы 2 ответа.");
+                    return false;
+                }
+
+                if (!question.Answer.Any(a => a.Is_Correct))
+                {
+                    MessageBox.Show($"Вопрос {question.Number} должен содержать хотя бы 1 правильный ответ.");
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // Сохранение нового теста в базу данных
+        private void SaveTest()
+        {
+            using (var context = new TeterinEntities())
+            {
+                var test = new Test
+                {
+                    ID_User = LogClass.user.ID,
+                    Name = TestNameTextBox.Text,
+                    Description = TestDescriptionTextBox.Text
+                };
+
+                context.Test.Add(test);
+                context.SaveChanges(); // Сначала сохраняем сам тест, чтобы получить его ID
+
+                foreach (var question in questions)
+                {
+                    var newQuestion = new Question
+                    {
+                        Text = question.Text,
+                        Number = question.Number,
+                        ID_Test = test.ID,
+                        Answer = new HashSet<Answer>(question.Answer.Select(a => new Answer
+                        {
+                            Text = a.Text,
+                            Is_Correct = a.Is_Correct
+                        }))
+                    };
+
+                    context.Question.Add(newQuestion);
+                }
+
+                context.SaveChanges();
+                MessageBox.Show("Тест успешно сохранен!");
+                MainFrame.mainFrame.Navigate(new AdminMainPage());
+            }
+        }
         private void AddQuestionButton_Click(object sender, RoutedEventArgs e)
         {
-            // Создаем новый вопрос
             var question = new Question
             {
-                Number = questions.Count + 1, // Нумерация вопросов
-                Answer = new ObservableCollection<Answer>() // Инициализируем коллекцию ответов
+                Number = questions.Count + 1,
+                Answer = new ObservableCollection<Answer>()
             };
             questions.Add(question);
         }
 
         private void AddAnswerButton_Click(object sender, RoutedEventArgs e)
         {
-            // Находим текущий вопрос, к которому добавляется ответ
             var button = sender as Button;
             var question = button?.DataContext as Question;
 
             if (question != null)
             {
-                // Создаем новый ответ
                 var answer = new Answer { Text = "", Is_Correct = false };
                 question.Answer.Add(answer);
             }
@@ -47,55 +153,62 @@ namespace Diplom.Pages.Admin
 
         private void SaveTestButton_Click(object sender, RoutedEventArgs e)
         {
-            // Проверяем, что введено название и описание теста
-            if (string.IsNullOrWhiteSpace(TestNameTextBox.Text) || string.IsNullOrWhiteSpace(TestDescriptionTextBox.Text))
-            {
-                MessageBox.Show("Название и описание теста обязательны для заполнения.");
-                return;
-            }
+            // Проверка данных
+            if (!ValidateTestData()) return;
 
-            // Проверяем, что есть хотя бы 1 вопрос
-            if (questions.Count == 0)
+            using (var context = new TeterinEntities())
             {
-                MessageBox.Show("Тест должен содержать хотя бы 1 вопрос.");
-                return;
-            }
-
-            // Проверяем каждый вопрос
-            foreach (var question in questions)
-            {
-                // Проверяем, что у вопроса есть хотя бы 2 ответа
-                if (question.Answer.Count < 2)
+                if (testId.HasValue)
                 {
-                    MessageBox.Show($"Вопрос {question.Number} должен иметь хотя бы 2 ответа.");
-                    return;
-                }
+                    // Загружаем тест из текущего контекста (не передаем старый объект!)
+                    var test = context.Test.Include("Question.Answer").FirstOrDefault(t => t.ID == testId.Value);
 
-                // Проверяем, что у вопроса есть хотя бы 1 правильный ответ
-                if (!question.Answer.Any(a => a.Is_Correct))
+                    if (test != null)
+                    {
+                        // Удаляем старые вопросы и ответы из контекста
+                        var oldQuestions = test.Question.ToList();
+                        foreach (var q in oldQuestions)
+                        {
+                            context.Answer.RemoveRange(q.Answer);
+                        }
+                        context.Question.RemoveRange(oldQuestions);
+
+                        // Обновляем поля теста
+                        test.Name = TestNameTextBox.Text;
+                        test.Description = TestDescriptionTextBox.Text;
+
+                        // Добавляем новые вопросы и ответы
+                        foreach (var question in questions)
+                        {
+                            var newQuestion = new Question
+                            {
+                                Text = question.Text,
+                                Number = question.Number,
+                                ID_Test = test.ID,
+                                Answer = new HashSet<Answer>(question.Answer.Select(a => new Answer
+                                {
+                                    Text = a.Text,
+                                    Is_Correct = a.Is_Correct
+                                }))
+                            };
+
+                            context.Question.Add(newQuestion);
+                        }
+
+                        context.SaveChanges();
+                        MessageBox.Show("Тест успешно обновлен!");
+                    }
+                    else
+                    {
+                        MessageBox.Show("Тест не найден.");
+                    }
+                }
+                else
                 {
-                    MessageBox.Show($"Вопрос {question.Number} должен содержать хотя бы 1 правильный ответ.");
-                    return;
+                    SaveTest();
                 }
             }
 
-            // Создаем новый тест
-            var test = new Test
-            {
-                ID_User = LogClass.user.ID,
-                Name = TestNameTextBox.Text,
-                Description = TestDescriptionTextBox.Text,
-                Question = new HashSet<Question>(questions)
-            };
-
-            // Сохраняем тест в базе данных (предполагается, что контекст базы данных уже настроен)
-            using (var context = new TeterinEntities()) // Замените на свой контекст
-            {
-                context.Test.Add(test);
-                context.SaveChanges();
-            }
-
-            MessageBox.Show("Тест успешно сохранен!");
             MainFrame.mainFrame.Navigate(new AdminMainPage());
         }
 

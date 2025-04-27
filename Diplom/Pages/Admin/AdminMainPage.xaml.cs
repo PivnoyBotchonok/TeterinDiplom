@@ -41,9 +41,13 @@ namespace Diplom.Pages.Admin
         private void EditTestButton_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
-            if (button?.DataContext is Test selectedTest)
+            var test = button?.DataContext as Test;
+
+            if (test != null)
             {
-                MainFrame.mainFrame.Navigate(new CreateTest());
+                // Передаем ID теста для редактирования
+                var createTestPage = new CreateTest(test.ID); // Передаем ID теста
+                MainFrame.mainFrame.Navigate(createTestPage);
             }
         }
         private void DeleteTestButton_Click(object sender, RoutedEventArgs e)

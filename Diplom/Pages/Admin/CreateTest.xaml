@@ -12,10 +12,10 @@
         <StackPanel Margin="10">
             <Button Content="Назад" HorizontalAlignment="Left" Click="BackBut_Click"/>
             <Label Content="Название теста:" />
-            <TextBox x:Name="TestNameTextBox" Margin="0,0,0,10" />
+            <TextBox x:Name="TestNameTextBox" Margin="0,0,0,10" Text="{Binding Name}" />
 
             <Label Content="Описание теста:" />
-            <TextBox x:Name="TestDescriptionTextBox" Margin="0,0,0,10" Height="100" TextWrapping="Wrap" AcceptsReturn="True" />
+            <TextBox x:Name="TestDescriptionTextBox" Margin="0,0,0,10" Height="100" TextWrapping="Wrap" AcceptsReturn="True" Text="{Binding Description}" />
 
             <Label Content="Вопросы:" />
             <ListView x:Name="QuestionsListView" Margin="0,0,0,10" HorizontalContentAlignment="Stretch">
