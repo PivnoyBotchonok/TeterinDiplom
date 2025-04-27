@@ -1,100 +1,107 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using Diplom.AppData;
 using Diplom.AppData.Model;
 
 namespace Diplom.Pages.Admin
 {
-    /// <summary>
-    /// Логика взаимодействия для CreateTest.xaml
-    /// </summary>
     public partial class CreateTest : Page
     {
-        public ObservableCollection<QuestionViewModel> Questions { get; set; } = new ObservableCollection<QuestionViewModel>();
+        private ObservableCollection<Question> questions;
 
         public CreateTest()
         {
             InitializeComponent();
-            QuestionsListView.ItemsSource = Questions;
+            questions = new ObservableCollection<Question>();
+            QuestionsListView.ItemsSource = questions;
         }
 
         private void AddQuestionButton_Click(object sender, RoutedEventArgs e)
         {
-            Questions.Add(new QuestionViewModel());
+            // Создаем новый вопрос
+            var question = new Question
+            {
+                Number = questions.Count + 1, // Нумерация вопросов
+                Answer = new ObservableCollection<Answer>() // Инициализируем коллекцию ответов
+            };
+            questions.Add(question);
         }
 
         private void AddAnswerButton_Click(object sender, RoutedEventArgs e)
         {
+            // Находим текущий вопрос, к которому добавляется ответ
             var button = sender as Button;
-            if (button?.DataContext is QuestionViewModel question)
+            var question = button?.DataContext as Question;
+
+            if (question != null)
             {
-                question.Answers.Add(new AnswerViewModel());
+                // Создаем новый ответ
+                var answer = new Answer { Text = "", Is_Correct = false };
+                question.Answer.Add(answer);
             }
         }
 
         private void SaveTestButton_Click(object sender, RoutedEventArgs e)
         {
-            using (var context = TeterinEntities.GetContext()) // Создаем один контекст для всего процесса
+            // Проверяем, что введено название и описание теста
+            if (string.IsNullOrWhiteSpace(TestNameTextBox.Text) || string.IsNullOrWhiteSpace(TestDescriptionTextBox.Text))
             {
-                // Создаем новый тест
-                var test = new Test
+                MessageBox.Show("Название и описание теста обязательны для заполнения.");
+                return;
+            }
+
+            // Проверяем, что есть хотя бы 1 вопрос
+            if (questions.Count == 0)
+            {
+                MessageBox.Show("Тест должен содержать хотя бы 1 вопрос.");
+                return;
+            }
+
+            // Проверяем каждый вопрос
+            foreach (var question in questions)
+            {
+                // Проверяем, что у вопроса есть хотя бы 2 ответа
+                if (question.Answer.Count < 2)
                 {
-                    ID_User = 1, // Можно заменить на актуального пользователя
-                    Name = TestNameTextBox.Text,
-                    Description = TestDescriptionTextBox.Text
-                };
-
-                // Добавляем тест в контекст
-                context.Test.Add(test);
-
-                // Сохраняем вопросы и ответы для этого теста
-                foreach (var q in Questions)
-                {
-                    var newQuestion = new Question
-                    {
-                        ID_Test = test.ID,
-                        Text = q.Text
-                    };
-                    context.Question.Add(newQuestion);
-
-                    foreach (var a in q.Answers)
-                    {
-                        var newAnswer = new Answer
-                        {
-                            ID_Question = newQuestion.ID,
-                            Text = a.Text,
-                            Is_Correct = a.IsCorrect
-                        };
-                        context.Answer.Add(newAnswer);
-                    }
+                    MessageBox.Show($"Вопрос {question.Number} должен иметь хотя бы 2 ответа.");
+                    return;
                 }
 
-                // Теперь сохраняем все изменения в базе данных за один раз
-                context.SaveChanges();
-
-                MessageBox.Show("Тест успешно сохранен!");
+                // Проверяем, что у вопроса есть хотя бы 1 правильный ответ
+                if (!question.Answer.Any(a => a.Is_Correct))
+                {
+                    MessageBox.Show($"Вопрос {question.Number} должен содержать хотя бы 1 правильный ответ.");
+                    return;
+                }
             }
-        }
 
-        public class QuestionViewModel
-        {
-            public string Text { get; set; }
-
-            // Используем ObservableCollection для автоматического обновления UI
-            public ObservableCollection<AnswerViewModel> Answers { get; set; }
-
-            public QuestionViewModel()
+            // Создаем новый тест
+            var test = new Test
             {
-                Answers = new ObservableCollection<AnswerViewModel>();
+                ID_User = LogClass.user.ID,
+                Name = TestNameTextBox.Text,
+                Description = TestDescriptionTextBox.Text,
+                Question = new HashSet<Question>(questions)
+            };
+
+            // Сохраняем тест в базе данных (предполагается, что контекст базы данных уже настроен)
+            using (var context = new TeterinEntities()) // Замените на свой контекст
+            {
+                context.Test.Add(test);
+                context.SaveChanges();
             }
+
+            MessageBox.Show("Тест успешно сохранен!");
+            MainFrame.mainFrame.Navigate(new AdminMainPage());
         }
 
-        public class AnswerViewModel
+        private void BackBut_Click(object sender, RoutedEventArgs e)
         {
-            public string Text { get; set; }
-            public bool IsCorrect { get; set; }
+            MainFrame.mainFrame.GoBack();
         }
     }
 }

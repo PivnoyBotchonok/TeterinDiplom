@@ -55,7 +55,7 @@ namespace Diplom.Pages.Admin
 
                 if (result == MessageBoxResult.Yes)
                 {
-                    using (var context = TeterinEntities.GetContext())
+                    using (var context = new TeterinEntities())
                     {
                         try
                         {
@@ -106,7 +106,7 @@ namespace Diplom.Pages.Admin
         {
             if (this.IsVisible)
             {
-                using (var context = TeterinEntities.GetContext())
+                using (var context = new TeterinEntities())
                 {
                     TeterinEntities.GetContext().ChangeTracker.Entries().ToList().ForEach(entry => entry.Reload());
                     DataContext = null;

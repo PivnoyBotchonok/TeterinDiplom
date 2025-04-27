@@ -9,7 +9,8 @@
       Title="CreateTest">
 
     <ScrollViewer>
-        <StackPanel Margin="20">
+        <StackPanel Margin="10">
+            <Button Content="Назад" HorizontalAlignment="Left" Click="BackBut_Click"/>
             <Label Content="Название теста:" />
             <TextBox x:Name="TestNameTextBox" Margin="0,0,0,10" />
 
@@ -27,7 +28,7 @@
                                         <Label Content="Текст вопроса"/>
                                         <TextBox Text="{Binding Text}" Width="300" Margin="0,0,0,5" HorizontalAlignment="Left"/>
 
-                                        <ItemsControl ItemsSource="{Binding Answers}">
+                                        <ItemsControl ItemsSource="{Binding Answer}">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
                                                     <StackPanel />
@@ -38,7 +39,7 @@
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal">
                                                         <TextBox Text="{Binding Text}" Width="200" Margin="0,0,5,0"/>
-                                                        <CheckBox Content="Правильный ответ" IsChecked="{Binding IsCorrect}"/>
+                                                        <CheckBox Content="Правильный ответ" IsChecked="{Binding Is_Correct}"/>
                                                     </StackPanel>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>

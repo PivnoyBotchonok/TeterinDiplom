@@ -34,7 +34,7 @@
                                             <ColumnDefinition Width="1*"/>
                                             <ColumnDefinition Width="1*"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="Тест" Grid.Column="0"/>
+                                        <TextBlock Text="{Binding Name}" Grid.Column="0"/>
                                         <TextBlock Text="Статус" Grid.Column="1"/>
                                         <Button Content="Пройти" Grid.Column="2" Click="Button_Click"/>
                                         <Expander Grid.Row="1" Grid.ColumnSpan="4">
