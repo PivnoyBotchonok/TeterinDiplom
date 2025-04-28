@@ -15,6 +15,7 @@ using System.Windows.Shapes;
 using Diplom.AppData;
 using Diplom.AppData.Model;
 using Diplom.Pages.User;
+using System.Data.Entity;
 
 namespace Diplom.Pages.Student
 {
@@ -29,11 +30,12 @@ namespace Diplom.Pages.Student
             InitializeComponent();
             DataContext = this;
             Tests = TeterinEntities.GetContext().Test.ToList();
+            MyResult.ItemsSource = TeterinEntities.GetContext().Result.Include(x=>x.Test).ToList();
         }
 
         private void backBut_Click(object sender, RoutedEventArgs e)
         {
-            MainFrame.mainFrame.GoBack();
+            MainFrame.mainFrame.Navigate(new LogPage());
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -47,7 +49,7 @@ namespace Diplom.Pages.Student
             if (selectedTest != null)
             {
                 // Переход на страницу теста, передаём ID
-                MainFrame.mainFrame.Navigate(new TestPage(selectedTest.ID));
+                MainFrame.mainFrame.Navigate(new TestPage(selectedTest));
             }
         }
     }

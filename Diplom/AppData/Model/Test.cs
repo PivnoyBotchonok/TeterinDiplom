@@ -11,15 +11,29 @@ namespace Diplom.AppData.Model
 {
     using System;
     using System.Collections.Generic;
-    
+    using System.Linq;
+
     public partial class Test
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
         public Test()
         {
             this.Question = new HashSet<Question>();
+            this.Result = new HashSet<Result>();
         }
-    
+
+        public string Status
+        {
+            get
+            {
+                using (var context = new TeterinEntities())
+                {
+                    var result = context.Result
+                        .FirstOrDefault(r => r.ID_Test == this.ID && r.ID_User == LogClass.user.ID);
+                    return result != null ? "Статус: Пройден" : "Статус: Не пройден";
+                }
+            }
+        }
         public int ID { get; set; }
         public int ID_User { get; set; }
         public string Name { get; set; }
@@ -27,6 +41,8 @@ namespace Diplom.AppData.Model
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Question> Question { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<Result> Result { get; set; }
         public virtual User User { get; set; }
     }
 }

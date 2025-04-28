@@ -214,7 +214,7 @@ namespace Diplom.Pages.Admin
 
         private void BackBut_Click(object sender, RoutedEventArgs e)
         {
-            MainFrame.mainFrame.GoBack();
+            MainFrame.mainFrame.Navigate(new AdminMainPage());
         }
     }
 }

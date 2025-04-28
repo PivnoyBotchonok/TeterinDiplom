@@ -13,7 +13,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Diplom.AppData;
 using Diplom.AppData.Model;
+using Diplom.Pages.Student;
 
 namespace Diplom.Pages.User
 {
@@ -22,64 +24,87 @@ namespace Diplom.Pages.User
     /// </summary>
     public partial class TestPage : Page
     {
-        private int _testId;
-        public Test SelectedTest { get; set; }
+        private Test _currentTest;
+        private Dictionary<Question, List<CheckBox>> _questionAnswersMap = new Dictionary<Question, List<CheckBox>>();
 
-        public TestPage(int testId)
+
+        public TestPage(Test test)
         {
             InitializeComponent();
-            _testId = testId;
-            DataContext = this;
+            _currentTest = test;
             LoadTest();
         }
 
         private void LoadTest()
         {
-            using (var context = TeterinEntities.GetContext())
-            {
-                // Загрузка теста с вопросами и ответами
-                SelectedTest = context.Test.Include("Question.Answer").FirstOrDefault(t => t.ID == _testId);
+            TestPanel.Children.Clear();
+            var questions = _currentTest.Question.OrderBy(q => q.Number).ToList();
 
-                if (SelectedTest == null)
+            foreach (var question in questions)
+            {
+                var qTextBlock = new TextBlock
                 {
-                    MessageBox.Show("Тест не найден!");
-                    NavigationService?.GoBack();
-                }
-                else
+                    Text = $"{question.Number}. {question.Text}",
+                    FontWeight = FontWeights.Bold,
+                    Margin = new Thickness(0, 10, 0, 5)
+                };
+                TestPanel.Children.Add(qTextBlock);
+
+                var checkBoxes = new List<CheckBox>();
+                foreach (var answer in question.Answer)
                 {
-                    // Присваиваем номер каждому вопросу
-                    int questionNumber = 1;
-                    foreach (var question in SelectedTest.Question)
+                    var cb = new CheckBox
                     {
-                        question.Number = questionNumber++; // Присваиваем номер
-                    }
+                        Content = answer.Text,
+                        Tag = answer,
+                        Margin = new Thickness(10, 2, 0, 2)
+                    };
+                    TestPanel.Children.Add(cb);
+                    checkBoxes.Add(cb);
                 }
+                _questionAnswersMap[question] = checkBoxes;
             }
         }
 
-
-        private void ResultBut_Click(object sender, RoutedEventArgs e)
+        private void FinishTest_Click(object sender, RoutedEventArgs e)
         {
-            if (SelectedTest == null || SelectedTest.Question == null) return;
+            int correctCount = 0;
+            int totalQuestions = _questionAnswersMap.Count;
 
-            int totalQuestions = SelectedTest.Question.Count;
-            int correctAnswers = 0;
-
-            foreach (var question in SelectedTest.Question)
+            foreach (var entry in _questionAnswersMap)
             {
-                var selected = question.Answer.FirstOrDefault(a => a.Is_Correct);
-                if (selected != null && selected.Is_Correct)
+                var question = entry.Key;
+                var checkboxes = entry.Value;
+
+                var selected = checkboxes.Where(cb => cb.IsChecked == true)
+                                         .Select(cb => cb.Tag as Answer).ToList();
+
+                var correct = question.Answer.Where(a => a.Is_Correct).ToList();
+
+                if (selected.Count == correct.Count &&
+                    !selected.Except(correct).Any())
                 {
-                    correctAnswers++;
+                    correctCount++;
                 }
             }
 
-            double percent = (double)correctAnswers / totalQuestions * 100;
+            decimal score = (decimal)correctCount / totalQuestions;
 
-            string resultMessage = $"Результат: {correctAnswers} из {totalQuestions} правильных ответов!\n" +
-                                   $"Процент: {percent:0.##}%";
+            using (var context = new TeterinEntities())
+            {
+                var result = new Result
+                {
+                    ID_User = LogClass.user.ID,
+                    ID_Test = _currentTest.ID,
+                    Score = score
+                };
+                context.Result.Add(result);
+                context.SaveChanges();
+            }
 
-            MessageBox.Show(resultMessage, "Результат теста", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show($"Вы завершили тест!\nПравильных ответов: {correctCount} из {totalQuestions}\nОценка: {(score > 0.9m ? 5 : score > 0.75m ? 4 : score > 0.5m ? 3 : 2)}");
+            // Здесь можно перейти на другую страницу или вернуться назад
+            MainFrame.mainFrame.Navigate(new StudentMainPage());
         }
     }
 }

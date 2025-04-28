@@ -20,7 +20,7 @@ namespace Diplom.AppData.Model
             : base("name=TeterinEntities")
         {
         }
-
+    
         public static TeterinEntities GetContext()
         {
             if (_context == null) _context = new TeterinEntities();
@@ -34,6 +34,7 @@ namespace Diplom.AppData.Model
     
         public virtual DbSet<Answer> Answer { get; set; }
         public virtual DbSet<Question> Question { get; set; }
+        public virtual DbSet<Result> Result { get; set; }
         public virtual DbSet<Role> Role { get; set; }
         public virtual DbSet<sysdiagrams> sysdiagrams { get; set; }
         public virtual DbSet<Test> Test { get; set; }

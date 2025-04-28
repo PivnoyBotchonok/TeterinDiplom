@@ -29,13 +29,16 @@ namespace Diplom.Pages.Admin
         {
             InitializeComponent();
             DataContext = this;
-            MyTests = TeterinEntities.GetContext().Test.Where(x=>x.ID_User == LogClass.user.ID).ToList();
-            Tests = TeterinEntities.GetContext().Test.ToList();
+            using (var context = new TeterinEntities()) 
+            {
+                MyTests = context.Test.Where(x => x.ID_User == LogClass.user.ID).ToList();
+                StudentTable.ItemsSource = context.User.Where(x=>x.ID_Role == 2).ToList();
+            }
         }
 
         private void backBut_Click(object sender, RoutedEventArgs e)
         {
-            MainFrame.mainFrame.GoBack();
+            MainFrame.mainFrame.Navigate(new LogPage());
         }
 
         private void EditTestButton_Click(object sender, RoutedEventArgs e)
@@ -66,6 +69,9 @@ namespace Diplom.Pages.Admin
                             var testToDelete = context.Test.FirstOrDefault(t => t.ID == selectedTest.ID);
                             if (testToDelete != null)
                             {
+                                var results = context.Result.Where(r => r.ID_Test == testToDelete.ID).ToList();
+                                context.Result.RemoveRange(results);
+
                                 var questions = context.Question.Where(q => q.ID_Test == testToDelete.ID).ToList();
 
                                 foreach (var q in questions)
@@ -80,11 +86,13 @@ namespace Diplom.Pages.Admin
 
                                 MessageBox.Show("Тест удалён.");
 
-                                // Обновляем списки
+                                // 🔄 Обновление списка тестов
                                 MyTests = context.Test.Where(x => x.ID_User == LogClass.user.ID).ToList();
                                 Tests = context.Test.ToList();
-                                DataContext = null;
-                                DataContext = this;
+
+                                // 🔁 Обновляем привязку
+                                MyTestListView.ItemsSource = null;
+                                MyTestListView.ItemsSource = MyTests;
                             }
                         }
                         catch (Exception ex)
@@ -96,6 +104,7 @@ namespace Diplom.Pages.Admin
             }
         }
 
+
         private void AddTestButton_Click(object sender, RoutedEventArgs e)
         {
             MainFrame.mainFrame.Navigate(new CreateTest());
@@ -103,7 +112,13 @@ namespace Diplom.Pages.Admin
 
         private void ResultBut_Click(object sender, RoutedEventArgs e)
         {
+            var button = sender as Button;
+            var test = button?.DataContext as Test;
 
+            if (test != null)
+            {
+                MainFrame.mainFrame.Navigate(new ResultPage(test.ID));
+            }
         }
 
         private void Page_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -112,11 +127,11 @@ namespace Diplom.Pages.Admin
             {
                 using (var context = new TeterinEntities())
                 {
-                    TeterinEntities.GetContext().ChangeTracker.Entries().ToList().ForEach(entry => entry.Reload());
+                    context.ChangeTracker.Entries().ToList().ForEach(entry => entry.Reload());
                     DataContext = null;
                     DataContext = this;
-                    MyTests = TeterinEntities.GetContext().Test.Where(x => x.ID_User == LogClass.user.ID).ToList();
-                    Tests = TeterinEntities.GetContext().Test.ToList();
+                    MyTests = context.Test.Where(x => x.ID_User == LogClass.user.ID).ToList();
+                    Tests = context.Test.ToList();
                 }
             }
         }

@@ -23,6 +23,15 @@
           <Property Name="Number" Type="int" Nullable="false" />
           <Property Name="Text" Type="nvarchar" MaxLength="50" Nullable="false" />
         </EntityType>
+        <EntityType Name="Result">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ID_User" Type="int" Nullable="false" />
+          <Property Name="ID_Test" Type="int" Nullable="false" />
+          <Property Name="Score" Type="decimal" Precision="5" Scale="2" Nullable="false" />
+        </EntityType>
         <EntityType Name="Role">
           <Key>
             <PropertyRef Name="ID" />
@@ -89,6 +98,30 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_Result_Test">
+          <End Role="Test" Type="Self.Test" Multiplicity="1" />
+          <End Role="Result" Type="Self.Result" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Test">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="Result">
+              <PropertyRef Name="ID_Test" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Result_User">
+          <End Role="User" Type="Self.User" Multiplicity="1" />
+          <End Role="Result" Type="Self.Result" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="User">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="Result">
+              <PropertyRef Name="ID_User" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_Test_User">
           <End Role="User" Type="Self.User" Multiplicity="1">
             <OnDelete Action="Cascade" />
@@ -120,6 +153,7 @@
         <EntityContainer Name="Хранилище Diplom_TeterinModelContainer">
           <EntitySet Name="Answer" EntityType="Self.Answer" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Question" EntityType="Self.Question" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Result" EntityType="Self.Result" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Role" EntityType="Self.Role" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="sysdiagrams" EntityType="Self.sysdiagrams" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Test" EntityType="Self.Test" Schema="dbo" store:Type="Tables" />
@@ -131,6 +165,14 @@
           <AssociationSet Name="FK_Question_Test" Association="Self.FK_Question_Test">
             <End Role="Test" EntitySet="Test" />
             <End Role="Question" EntitySet="Question" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Result_Test" Association="Self.FK_Result_Test">
+            <End Role="Test" EntitySet="Test" />
+            <End Role="Result" EntitySet="Result" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Result_User" Association="Self.FK_Result_User">
+            <End Role="User" EntitySet="User" />
+            <End Role="Result" EntitySet="Result" />
           </AssociationSet>
           <AssociationSet Name="FK_Test_User" Association="Self.FK_Test_User">
             <End Role="User" EntitySet="User" />
@@ -148,6 +190,7 @@
         <EntityContainer Name="TeterinEntities" annotation:LazyLoadingEnabled="true">
           <EntitySet Name="Answer" EntityType="Diplom_TeterinModel.Answer" />
           <EntitySet Name="Question" EntityType="Diplom_TeterinModel.Question" />
+          <EntitySet Name="Result" EntityType="Diplom_TeterinModel.Result" />
           <EntitySet Name="Role" EntityType="Diplom_TeterinModel.Role" />
           <EntitySet Name="sysdiagrams" EntityType="Diplom_TeterinModel.sysdiagrams" />
           <EntitySet Name="Test" EntityType="Diplom_TeterinModel.Test" />
@@ -159,6 +202,14 @@
           <AssociationSet Name="FK_Question_Test" Association="Diplom_TeterinModel.FK_Question_Test">
             <End Role="Test" EntitySet="Test" />
             <End Role="Question" EntitySet="Question" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Result_Test" Association="Diplom_TeterinModel.FK_Result_Test">
+            <End Role="Test" EntitySet="Test" />
+            <End Role="Result" EntitySet="Result" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Result_User" Association="Diplom_TeterinModel.FK_Result_User">
+            <End Role="User" EntitySet="User" />
+            <End Role="Result" EntitySet="Result" />
           </AssociationSet>
           <AssociationSet Name="FK_User_Role" Association="Diplom_TeterinModel.FK_User_Role">
             <End Role="Role" EntitySet="Role" />
@@ -190,6 +241,17 @@
           <NavigationProperty Name="Answer" Relationship="Diplom_TeterinModel.FK_Answer_Question" FromRole="Question" ToRole="Answer" />
           <NavigationProperty Name="Test" Relationship="Diplom_TeterinModel.FK_Question_Test" FromRole="Question" ToRole="Test" />
         </EntityType>
+        <EntityType Name="Result">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ID_User" Type="Int32" Nullable="false" />
+          <Property Name="ID_Test" Type="Int32" Nullable="false" />
+          <Property Name="Score" Type="Decimal" Nullable="false" Precision="5" Scale="2" />
+          <NavigationProperty Name="Test" Relationship="Diplom_TeterinModel.FK_Result_Test" FromRole="Result" ToRole="Test" />
+          <NavigationProperty Name="User" Relationship="Diplom_TeterinModel.FK_Result_User" FromRole="Result" ToRole="User" />
+        </EntityType>
         <EntityType Name="Role">
           <Key>
             <PropertyRef Name="ID" />
@@ -217,6 +279,7 @@
           <Property Name="Name" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Name="Description" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
           <NavigationProperty Name="Question" Relationship="Diplom_TeterinModel.FK_Question_Test" FromRole="Test" ToRole="Question" />
+          <NavigationProperty Name="Result" Relationship="Diplom_TeterinModel.FK_Result_Test" FromRole="Test" ToRole="Result" />
           <NavigationProperty Name="User" Relationship="Diplom_TeterinModel.FK_Test_User" FromRole="Test" ToRole="User" />
         </EntityType>
         <EntityType Name="User">
@@ -230,6 +293,7 @@
           <Property Name="PName" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Name="Login" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Name="Password" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Result" Relationship="Diplom_TeterinModel.FK_Result_User" FromRole="User" ToRole="Result" />
           <NavigationProperty Name="Role" Relationship="Diplom_TeterinModel.FK_User_Role" FromRole="User" ToRole="Role" />
           <NavigationProperty Name="Test" Relationship="Diplom_TeterinModel.FK_Test_User" FromRole="User" ToRole="Test" />
         </EntityType>
@@ -258,6 +322,30 @@
             </Principal>
             <Dependent Role="Question">
               <PropertyRef Name="ID_Test" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Result_Test">
+          <End Type="Diplom_TeterinModel.Test" Role="Test" Multiplicity="1" />
+          <End Type="Diplom_TeterinModel.Result" Role="Result" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Test">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="Result">
+              <PropertyRef Name="ID_Test" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Result_User">
+          <End Type="Diplom_TeterinModel.User" Role="User" Multiplicity="1" />
+          <End Type="Diplom_TeterinModel.Result" Role="Result" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="User">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="Result">
+              <PropertyRef Name="ID_User" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
@@ -311,6 +399,16 @@
                 <ScalarProperty Name="Text" ColumnName="Text" />
                 <ScalarProperty Name="Number" ColumnName="Number" />
                 <ScalarProperty Name="ID_Test" ColumnName="ID_Test" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Result">
+            <EntityTypeMapping TypeName="Diplom_TeterinModel.Result">
+              <MappingFragment StoreEntitySet="Result">
+                <ScalarProperty Name="Score" ColumnName="Score" />
+                <ScalarProperty Name="ID_Test" ColumnName="ID_Test" />
+                <ScalarProperty Name="ID_User" ColumnName="ID_User" />
                 <ScalarProperty Name="ID" ColumnName="ID" />
               </MappingFragment>
             </EntityTypeMapping>

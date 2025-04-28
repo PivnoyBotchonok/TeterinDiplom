@@ -62,45 +62,10 @@
                 </TabItem>
                 <TabItem>
                     <TabItem.Header>
-                        <TextBlock Text="Все тесты"/>
-                    </TabItem.Header>
-                    <TabItem.Content>
-                        <ListView x:Name="TestListView" ItemsSource="{Binding Tests}">
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="1*"/>
-                                            <RowDefinition Height="1*"/>
-                                        </Grid.RowDefinitions>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="3*"/>
-                                            <ColumnDefinition Width="1*"/>
-                                            <ColumnDefinition Width="1*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="Тест" Grid.Column="0"/>
-                                        <TextBlock Text="Статус" Grid.Column="1"/>
-                                        <Button Content="Пройти" Grid.Column="2"/>
-                                        <Expander Grid.Row="1" Grid.ColumnSpan="4">
-                                            <Expander.Header>
-                                                <TextBlock Text="Описание"/>
-                                            </Expander.Header>
-                                            <Expander.Content>
-                                                <TextBlock Text="{Binding Description}"/>
-                                            </Expander.Content>
-                                        </Expander>
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                    </TabItem.Content>
-                </TabItem>
-                <TabItem>
-                    <TabItem.Header>
                         <TextBlock Text="Студенты"/>
                     </TabItem.Header>
                     <TabItem.Content>
-                        <DataGrid x:Name="StudentTable">
+                        <DataGrid x:Name="StudentTable" AutoGenerateColumns="False">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Фамилия" Binding="{Binding SName}" Width="1*"/>
                                 <DataGridTextColumn Header="Имя" Binding="{Binding FName}" Width="1*"/>
