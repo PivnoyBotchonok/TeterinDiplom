@@ -1,36 +1,38 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using Diplom.AppData;
 using Diplom.AppData.Model;
 
 namespace Diplom.Pages
 {
     /// <summary>
-    /// Логика взаимодействия для RegPage.xaml
+    /// Страница регистрации новых пользователей в системе
     /// </summary>
     public partial class RegPage : Page
     {
+        /// <summary>
+        /// Конструктор страницы регистрации
+        /// </summary>
         public RegPage()
         {
             InitializeComponent();
-            CmbBox.ItemsSource = TeterinEntities.GetContext().Role.Select(x=>x.RoleName).ToList();
+
+            // Загрузка списка ролей из базы данных в выпадающий список
+            CmbBox.ItemsSource = TeterinEntities.GetContext()
+                .Role
+                .Select(x => x.RoleName)
+                .ToList();
         }
 
+        /// <summary>
+        /// Обработчик нажатия кнопки регистрации
+        /// </summary>
         private void regBut_Click(object sender, RoutedEventArgs e)
         {
-            // Проверка на пустые поля
+            // Проверка заполнения всех обязательных полей
             if (string.IsNullOrWhiteSpace(SName_TextBox.Text) ||
                 string.IsNullOrWhiteSpace(FName_TextBox.Text) ||
                 string.IsNullOrWhiteSpace(PName_TextBox.Text) ||
@@ -38,72 +40,96 @@ namespace Diplom.Pages
                 string.IsNullOrWhiteSpace(Pass_TextBox.Text) ||
                 CmbBox.SelectedItem == null)
             {
-                MessageBox.Show("Пожалуйста, заполните все поля!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Пожалуйста, заполните все поля!",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
             try
             {
+                // Получаем выбранную роль из ComboBox
                 var selectedRoleName = CmbBox.SelectedItem.ToString();
 
-                // Получаем ID роли по названию
-                var role = TeterinEntities.GetContext().Role.FirstOrDefault(r => r.RoleName == selectedRoleName);
+                // Поиск роли в базе данных
+                var role = TeterinEntities.GetContext()
+                    .Role
+                    .FirstOrDefault(r => r.RoleName == selectedRoleName);
+
                 if (role == null)
                 {
-                    MessageBox.Show("Роль не найдена!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Роль не найдена!",
+                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
-                // Проверка на уникальность логина
-                if (TeterinEntities.GetContext().User.Any(u => u.Login == Login_TextBox.Text))
+                // Проверка на существование пользователя с таким же логином
+                if (TeterinEntities.GetContext()
+                    .User
+                    .Any(u => u.Login == Login_TextBox.Text))
                 {
-                    MessageBox.Show("Пользователь с таким логином уже существует!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Пользователь с таким логином уже существует!",
+                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                // Создаем нового пользователя
+                // Создание нового пользователя
                 var newUser = new Diplom.AppData.Model.User
                 {
-                    FName = FName_TextBox.Text,
-                    SName = SName_TextBox.Text,
-                    PName = PName_TextBox.Text,
-                    Login = Login_TextBox.Text,
-                    Password = Pass_TextBox.Text,
-                    ID_Role = role.ID
+                    FName = FName_TextBox.Text,       // Имя
+                    SName = SName_TextBox.Text,       // Фамилия
+                    PName = PName_TextBox.Text,       // Отчество
+                    Login = Login_TextBox.Text,       // Логин
+                    Password = Pass_TextBox.Text,     // Пароль
+                    ID_Role = role.ID                 // ID роли
                 };
 
-                // Добавляем в базу
+                // Добавление пользователя в базу данных
                 TeterinEntities.GetContext().User.Add(newUser);
                 TeterinEntities.GetContext().SaveChanges();
 
-                MessageBox.Show("Регистрация прошла успешно!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Регистрация прошла успешно!",
+                    "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                // Очищаем поля после регистрации
-                FName_TextBox.Clear();
-                SName_TextBox.Clear();
-                PName_TextBox.Clear();
-                Login_TextBox.Clear();
-                Pass_TextBox.Clear();
-                CmbBox.SelectedIndex = -1;
+                // Очистка полей формы после успешной регистрации
+                ClearRegistrationForm();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ошибка при регистрации: " + ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Ошибка при регистрации: {ex.Message}",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
+        /// <summary>
+        /// Очищает поля формы регистрации
+        /// </summary>
+        private void ClearRegistrationForm()
+        {
+            FName_TextBox.Clear();
+            SName_TextBox.Clear();
+            PName_TextBox.Clear();
+            Login_TextBox.Clear();
+            Pass_TextBox.Clear();
+            CmbBox.SelectedIndex = -1;
+        }
 
+        /// <summary>
+        /// Обработчик нажатия кнопки "Назад"
+        /// </summary>
         private void backBut_Click(object sender, RoutedEventArgs e)
         {
             MainFrame.mainFrame.GoBack();
         }
+
+        /// <summary>
+        /// Обработчик ввода текста - разрешает ввод только букв
+        /// </summary>
         private void LettersOnlyTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            // Проверяем, является ли введенный символ буквой
+            // Регулярное выражение для проверки ввода только букв (русских и английских)
             if (!System.Text.RegularExpressions.Regex.IsMatch(e.Text, "^[a-zA-Zа-яА-Я]+$"))
             {
-                // Если символ не буква, отменяем ввод
-                e.Handled = true;
+                e.Handled = true; // Блокировка ввода недопустимых символов
             }
         }
     }

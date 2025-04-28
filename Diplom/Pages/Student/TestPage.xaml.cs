@@ -103,7 +103,6 @@ namespace Diplom.Pages.User
             }
 
             MessageBox.Show($"Вы завершили тест!\nПравильных ответов: {correctCount} из {totalQuestions}\nОценка: {(score > 0.9m ? 5 : score > 0.75m ? 4 : score > 0.5m ? 3 : 2)}");
-            // Здесь можно перейти на другую страницу или вернуться назад
             MainFrame.mainFrame.Navigate(new StudentMainPage());
         }
     }

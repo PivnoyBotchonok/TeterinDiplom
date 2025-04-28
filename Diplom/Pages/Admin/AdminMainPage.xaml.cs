@@ -19,28 +19,46 @@ using static System.Net.Mime.MediaTypeNames;
 namespace Diplom.Pages.Admin
 {
     /// <summary>
-    /// Логика взаимодействия для MainPage.xaml
+    /// Главная страница администратора, содержащая функционал управления тестами и пользователями
     /// </summary>
     public partial class AdminMainPage : Page
     {
+        // Список тестов, созданных текущим пользователем
         public List<Test> MyTests { get; set; }
+
+        // Список всех тестов в системе
         public List<Test> Tests { get; set; }
+
+        /// <summary>
+        /// Конструктор страницы администратора
+        /// </summary>
         public AdminMainPage()
         {
             InitializeComponent();
             DataContext = this;
-            using (var context = new TeterinEntities()) 
+
+            // Загрузка данных при инициализации
+            using (var context = new TeterinEntities())
             {
+                // Получаем тесты текущего пользователя
                 MyTests = context.Test.Where(x => x.ID_User == LogClass.user.ID).ToList();
-                StudentTable.ItemsSource = context.User.Where(x=>x.ID_Role == 2).ToList();
+
+                // Загружаем список студентов (пользователей с ролью 2)
+                StudentTable.ItemsSource = context.User.Where(x => x.ID_Role == 2).ToList();
             }
         }
 
+        /// <summary>
+        /// Обработчик кнопки возврата на страницу авторизации
+        /// </summary>
         private void backBut_Click(object sender, RoutedEventArgs e)
         {
             MainFrame.mainFrame.Navigate(new LogPage());
         }
 
+        /// <summary>
+        /// Обработчик кнопки редактирования теста
+        /// </summary>
         private void EditTestButton_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
@@ -48,17 +66,23 @@ namespace Diplom.Pages.Admin
 
             if (test != null)
             {
-                // Передаем ID теста для редактирования
-                var createTestPage = new CreateTest(test.ID); // Передаем ID теста
+                // Передаем ID теста для редактирования на страницу создания/редактирования теста
+                var createTestPage = new CreateTest(test.ID);
                 MainFrame.mainFrame.Navigate(createTestPage);
             }
         }
+
+        /// <summary>
+        /// Обработчик кнопки удаления теста
+        /// </summary>
         private void DeleteTestButton_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
             if (button?.DataContext is Test selectedTest)
             {
-                var result = MessageBox.Show($"Вы уверены, что хотите удалить тест '{selectedTest.Name}'?", "Подтверждение удаления", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                // Запрос подтверждения удаления
+                var result = MessageBox.Show($"Вы уверены, что хотите удалить тест '{selectedTest.Name}'?",
+                    "Подтверждение удаления", MessageBoxButton.YesNo, MessageBoxImage.Warning);
 
                 if (result == MessageBoxResult.Yes)
                 {
@@ -66,12 +90,15 @@ namespace Diplom.Pages.Admin
                     {
                         try
                         {
+                            // Находим тест для удаления
                             var testToDelete = context.Test.FirstOrDefault(t => t.ID == selectedTest.ID);
                             if (testToDelete != null)
                             {
+                                // Удаляем связанные результаты
                                 var results = context.Result.Where(r => r.ID_Test == testToDelete.ID).ToList();
                                 context.Result.RemoveRange(results);
 
+                                // Удаляем связанные вопросы и ответы
                                 var questions = context.Question.Where(q => q.ID_Test == testToDelete.ID).ToList();
 
                                 foreach (var q in questions)
@@ -81,16 +108,18 @@ namespace Diplom.Pages.Admin
                                 }
 
                                 context.Question.RemoveRange(questions);
+
+                                // Удаляем сам тест
                                 context.Test.Remove(testToDelete);
                                 context.SaveChanges();
 
                                 MessageBox.Show("Тест удалён.");
 
-                                // 🔄 Обновление списка тестов
+                                // Обновление списков тестов
                                 MyTests = context.Test.Where(x => x.ID_User == LogClass.user.ID).ToList();
                                 Tests = context.Test.ToList();
 
-                                // 🔁 Обновляем привязку
+                                // Обновление отображения
                                 MyTestListView.ItemsSource = null;
                                 MyTestListView.ItemsSource = MyTests;
                             }
@@ -104,12 +133,17 @@ namespace Diplom.Pages.Admin
             }
         }
 
-
+        /// <summary>
+        /// Обработчик кнопки добавления нового теста
+        /// </summary>
         private void AddTestButton_Click(object sender, RoutedEventArgs e)
         {
             MainFrame.mainFrame.Navigate(new CreateTest());
         }
 
+        /// <summary>
+        /// Обработчик кнопки просмотра результатов теста
+        /// </summary>
         private void ResultBut_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
@@ -117,17 +151,25 @@ namespace Diplom.Pages.Admin
 
             if (test != null)
             {
+                // Переход на страницу результатов с передачей ID теста
                 MainFrame.mainFrame.Navigate(new ResultPage(test.ID));
             }
         }
 
+        /// <summary>
+        /// Обработчик события изменения видимости страницы
+        /// </summary>
         private void Page_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
             if (this.IsVisible)
             {
+                // При повторном отображении страницы обновляем данные
                 using (var context = new TeterinEntities())
                 {
+                    // Перезагружаем данные из базы
                     context.ChangeTracker.Entries().ToList().ForEach(entry => entry.Reload());
+
+                    // Обновляем контекст данных и списки тестов
                     DataContext = null;
                     DataContext = this;
                     MyTests = context.Test.Where(x => x.ID_User == LogClass.user.ID).ToList();

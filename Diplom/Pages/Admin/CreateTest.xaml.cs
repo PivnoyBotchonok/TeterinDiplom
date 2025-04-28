@@ -9,39 +9,56 @@ using Diplom.AppData.Model;
 
 namespace Diplom.Pages.Admin
 {
+    /// <summary>
+    /// Страница создания/редактирования теста с вопросами и ответами
+    /// </summary>
     public partial class CreateTest : Page
     {
+        // Коллекция вопросов для текущего теста
         private ObservableCollection<Question> questions;
+
+        // ID теста (null для нового теста)
         private int? testId;
 
-        // Конструктор, принимающий ID теста для редактирования
+        /// <summary>
+        /// Конструктор страницы создания/редактирования теста
+        /// </summary>
+        /// <param name="testId">ID редактируемого теста (null для нового теста)</param>
         public CreateTest(int? testId = null)
         {
             InitializeComponent();
+
+            // Инициализация коллекции вопросов
             questions = new ObservableCollection<Question>();
             this.testId = testId;
+
+            // Привязка коллекции к ListView
             QuestionsListView.ItemsSource = questions;
 
-            // Если передан ID теста, загружаем тест для редактирования
+            // Если передан ID теста - загружаем его данные для редактирования
             if (testId.HasValue)
             {
                 LoadTestForEditing(testId.Value);
             }
         }
 
+        /// <summary>
+        /// Загрузка данных теста для редактирования
+        /// </summary>
+        /// <param name="testId">ID теста</param>
         private void LoadTestForEditing(int testId)
         {
-            using (var context = new TeterinEntities()) // Замените на ваш контекст
+            using (var context = new TeterinEntities())
             {
-                // Находим тест по ID
+                // Загрузка теста с вопросами и ответами
                 var test = context.Test.Include("Question.Answer").FirstOrDefault(t => t.ID == testId);
 
                 if (test != null)
                 {
-                    // Устанавливаем DataContext для привязки
+                    // Установка контекста данных для привязки
                     this.DataContext = test;
 
-                    // Загружаем вопросы и ответы в коллекцию
+                    // Заполнение коллекции вопросами и ответами
                     foreach (var question in test.Question)
                     {
                         questions.Add(new Question
@@ -59,29 +76,38 @@ namespace Diplom.Pages.Admin
             }
         }
 
-        // Проверка данных перед сохранением
+        /// <summary>
+        /// Валидация данных теста перед сохранением
+        /// </summary>
+        /// <returns>True если данные валидны, иначе False</returns>
         private bool ValidateTestData()
         {
-            if (string.IsNullOrWhiteSpace(TestNameTextBox.Text) || string.IsNullOrWhiteSpace(TestDescriptionTextBox.Text))
+            // Проверка названия и описания теста
+            if (string.IsNullOrWhiteSpace(TestNameTextBox.Text) ||
+                string.IsNullOrWhiteSpace(TestDescriptionTextBox.Text))
             {
                 MessageBox.Show("Название и описание теста обязательны для заполнения.");
                 return false;
             }
 
+            // Проверка наличия вопросов
             if (questions.Count == 0)
             {
                 MessageBox.Show("Тест должен содержать хотя бы 1 вопрос.");
                 return false;
             }
 
+            // Проверка каждого вопроса
             foreach (var question in questions)
             {
+                // Проверка количества ответов
                 if (question.Answer.Count < 2)
                 {
                     MessageBox.Show($"Вопрос {question.Number} должен иметь хотя бы 2 ответа.");
                     return false;
                 }
 
+                // Проверка наличия правильного ответа
                 if (!question.Answer.Any(a => a.Is_Correct))
                 {
                     MessageBox.Show($"Вопрос {question.Number} должен содержать хотя бы 1 правильный ответ.");
@@ -92,11 +118,14 @@ namespace Diplom.Pages.Admin
             return true;
         }
 
-        // Сохранение нового теста в базу данных
+        /// <summary>
+        /// Сохранение нового теста в базу данных
+        /// </summary>
         private void SaveTest()
         {
             using (var context = new TeterinEntities())
             {
+                // Создание нового теста
                 var test = new Test
                 {
                     ID_User = LogClass.user.ID,
@@ -104,9 +133,11 @@ namespace Diplom.Pages.Admin
                     Description = TestDescriptionTextBox.Text
                 };
 
+                // Добавление теста в контекст
                 context.Test.Add(test);
-                context.SaveChanges(); // Сначала сохраняем сам тест, чтобы получить его ID
+                context.SaveChanges(); // Сохранение для получения ID
 
+                // Добавление вопросов и ответов
                 foreach (var question in questions)
                 {
                     var newQuestion = new Question
@@ -129,8 +160,13 @@ namespace Diplom.Pages.Admin
                 MainFrame.mainFrame.Navigate(new AdminMainPage());
             }
         }
+
+        /// <summary>
+        /// Обработчик кнопки добавления вопроса
+        /// </summary>
         private void AddQuestionButton_Click(object sender, RoutedEventArgs e)
         {
+            // Создание нового вопроса с порядковым номером
             var question = new Question
             {
                 Number = questions.Count + 1,
@@ -139,6 +175,9 @@ namespace Diplom.Pages.Admin
             questions.Add(question);
         }
 
+        /// <summary>
+        /// Обработчик кнопки добавления ответа
+        /// </summary>
         private void AddAnswerButton_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
@@ -146,26 +185,30 @@ namespace Diplom.Pages.Admin
 
             if (question != null)
             {
+                // Добавление пустого ответа к вопросу
                 var answer = new Answer { Text = "", Is_Correct = false };
                 question.Answer.Add(answer);
             }
         }
 
+        /// <summary>
+        /// Обработчик кнопки сохранения теста
+        /// </summary>
         private void SaveTestButton_Click(object sender, RoutedEventArgs e)
         {
-            // Проверка данных
+            // Валидация данных
             if (!ValidateTestData()) return;
 
             using (var context = new TeterinEntities())
             {
                 if (testId.HasValue)
                 {
-                    // Загружаем тест из текущего контекста (не передаем старый объект!)
+                    // Редактирование существующего теста
                     var test = context.Test.Include("Question.Answer").FirstOrDefault(t => t.ID == testId.Value);
 
                     if (test != null)
                     {
-                        // Удаляем старые вопросы и ответы из контекста
+                        // Удаление старых вопросов и ответов
                         var oldQuestions = test.Question.ToList();
                         foreach (var q in oldQuestions)
                         {
@@ -173,11 +216,11 @@ namespace Diplom.Pages.Admin
                         }
                         context.Question.RemoveRange(oldQuestions);
 
-                        // Обновляем поля теста
+                        // Обновление данных теста
                         test.Name = TestNameTextBox.Text;
                         test.Description = TestDescriptionTextBox.Text;
 
-                        // Добавляем новые вопросы и ответы
+                        // Добавление новых вопросов и ответов
                         foreach (var question in questions)
                         {
                             var newQuestion = new Question
@@ -205,13 +248,18 @@ namespace Diplom.Pages.Admin
                 }
                 else
                 {
+                    // Создание нового теста
                     SaveTest();
                 }
             }
 
+            // Возврат на главную страницу администратора
             MainFrame.mainFrame.Navigate(new AdminMainPage());
         }
 
+        /// <summary>
+        /// Обработчик кнопки возврата
+        /// </summary>
         private void BackBut_Click(object sender, RoutedEventArgs e)
         {
             MainFrame.mainFrame.Navigate(new AdminMainPage());
