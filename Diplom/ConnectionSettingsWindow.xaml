@@ -1,0 +1,38 @@
+﻿<Window x:Class="Diplom.ConnectionSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Diplom"
+        mc:Ignorable="d"
+        Title="ConnectionSettingsWindow" Height="450" Width="800">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Label Grid.Row="0" Content="Сервер SQL Server:"/>
+        <TextBox Grid.Row="1" x:Name="ServerTextBox" Margin="0,0,0,10"/>
+
+        <Label Grid.Row="2" Content="Тип аутентификации:"/>
+        <ComboBox Grid.Row="3" x:Name="AuthTypeComboBox" Margin="0,0,0,10" SelectionChanged="AuthTypeComboBox_SelectionChanged">
+            <ComboBoxItem Tag="Windows">Windows Authentication</ComboBoxItem>
+            <ComboBoxItem Tag="SQL">SQL Server Authentication</ComboBoxItem>
+        </ComboBox>
+
+        <StackPanel Grid.Row="4" x:Name="SqlAuthPanel" Visibility="Collapsed">
+            <Label Content="Логин:"/>
+            <TextBox x:Name="UsernameTextBox" Margin="0,0,0,5"/>
+            <Label Content="Пароль:"/>
+            <PasswordBox x:Name="PasswordBox" Margin="0,0,0,10"/>
+        </StackPanel>
+
+        <Button Grid.Row="6" Content="Сохранить" Click="SaveButton_Click" HorizontalAlignment="Right" Width="80"/>
+    </Grid>
+</Window>

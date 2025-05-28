@@ -177,5 +177,30 @@ namespace Diplom.Pages.Admin
                 }
             }
         }
+        private void SettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            var settingsWindow = new ConnectionSettingsWindow();
+
+            if (settingsWindow.ShowDialog() == true)
+            {
+                MessageBox.Show("Настройки подключения обновлены. Перезапустите приложение для применения изменений.",
+                                "Настройки сохранены",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Information);
+
+                // Предложение перезапустить приложение
+                var restart = MessageBox.Show("Перезапустить приложение сейчас?",
+                                             "Перезапуск",
+                                             MessageBoxButton.YesNo,
+                                             MessageBoxImage.Question);
+
+                if (restart == MessageBoxResult.Yes)
+                {
+                    // Перезапуск приложения
+                    System.Diagnostics.Process.Start(System.Windows.Application.ResourceAssembly.Location);
+                    System.Windows.Application.Current.Shutdown();
+                }
+            }
+        }
     }
 }

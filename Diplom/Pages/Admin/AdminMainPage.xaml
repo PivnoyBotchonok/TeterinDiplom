@@ -13,7 +13,11 @@
             <RowDefinition Height="auto"/>
             <RowDefinition Height="1*"/>
         </Grid.RowDefinitions>
-        <Button x:Name="backBut" Content="Назад" Grid.Row="0" HorizontalAlignment="Left" Click="backBut_Click"/>
+        <StackPanel Grid.Row="0" HorizontalAlignment="Left" Orientation="Horizontal">
+            <Button x:Name="backBut" Content="Назад" Click="backBut_Click"/>
+            <Button x:Name="settingBut" Content="Подключение" Click="SettingsButton_Click"/>
+        </StackPanel>
+        
         <ScrollViewer Grid.Row="1">
             <TabControl>
                 <TabItem>
